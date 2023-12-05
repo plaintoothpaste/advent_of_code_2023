@@ -10,7 +10,6 @@
 
 enum class color { red, green, blue };
 using color_store = std::array<size_t, 3>;
-constexpr auto bag = color_store{ 12, 13, 14 };
 
 std::optional<std::string> removeWord(const std::string& token, const std::string& word) {
     const auto limit = token.find(word);
@@ -72,11 +71,14 @@ struct game {
             }
         }
     }
-    bool operator<=(const color_store& rhs) const {
-        return std::ranges::all_of(games, [rhs](const auto& g) {
-            return g[static_cast<size_t>(color::blue)] <= rhs[static_cast<size_t>(color::blue)] && g[static_cast<size_t>(color::green)] <= rhs[static_cast<size_t>(color::green)]
-                && g[static_cast<size_t>(color::red)] <= rhs[static_cast<size_t>(color::red)];
-        });
+    color_store minimal() const {
+        auto min_bag = color_store{};
+        for (const auto& g : games) {
+            min_bag[static_cast<size_t>(color::red)] = std::max(min_bag[static_cast<size_t>(color::red)],g[static_cast<size_t>(color::red)]);
+            min_bag[static_cast<size_t>(color::green)] = std::max(min_bag[static_cast<size_t>(color::green)],g[static_cast<size_t>(color::green)]);
+            min_bag[static_cast<size_t>(color::blue)] = std::max(min_bag[static_cast<size_t>(color::blue)],g[static_cast<size_t>(color::blue)]);
+        }
+        return min_bag;
     }
 };
 
@@ -85,7 +87,8 @@ int main() {
     const auto data = parse("input.txt", fn);
     const auto result = std::accumulate(data.begin(), data.end(),size_t{0},
         [](const size_t sum, const game &g) {
-            return g<=bag ? sum+g.id : sum;
+            const color_store minimal = g.minimal();
+            return sum + minimal[0]*minimal[1]*minimal[2];
         });
 
     std::cout << result;
