@@ -74,17 +74,17 @@ struct game {
     }
     bool operator<=(const color_store& rhs) const {
         return std::ranges::all_of(games, [rhs](const auto& g) {
-            return g[static_cast<size_t>(color::blue)] > rhs[static_cast<size_t>(color::blue)] || g[static_cast<size_t>(color::green)] > rhs[static_cast<size_t>(color::green)]
-                || g[static_cast<size_t>(color::red)] > rhs[static_cast<size_t>(color::red)];
+            return g[static_cast<size_t>(color::blue)] <= rhs[static_cast<size_t>(color::blue)] && g[static_cast<size_t>(color::green)] <= rhs[static_cast<size_t>(color::green)]
+                && g[static_cast<size_t>(color::red)] <= rhs[static_cast<size_t>(color::red)];
         });
     }
 };
 
 int main() {
     const std::function<game(std::string)> fn = [](const std::string& line) { return game(line); };
-    const auto data = parse("example.txt", fn);
+    const auto data = parse("input.txt", fn);
     const auto result = std::accumulate(data.begin(), data.end(),size_t{0},
-        [](const size_t &sum, const game &g) {
+        [](const size_t sum, const game &g) {
             return g<=bag ? sum+g.id : sum;
         });
 
