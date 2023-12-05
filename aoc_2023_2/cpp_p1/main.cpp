@@ -1,17 +1,21 @@
+#include <algorithm>
 #include <array>
+#include <iostream>
+#include <numeric>
 #include <optional>
 #include <string>
 #include <vector>
+
 #include "file_parse.h"
 
 enum class color { red, green, blue };
 using color_store = std::array<size_t, 3>;
-constexpr auto bag = color_store{ 12,13,14 };
+constexpr auto bag = color_store{ 12, 13, 14 };
 
 std::optional<std::string> removeWord(const std::string& token, const std::string& word) {
     const auto limit = token.find(word);
     if (limit < token.size()) {
-        return {token.substr(0, limit)};
+        return { token.substr(0, limit) };
     }
     return {};
 }
@@ -20,21 +24,20 @@ std::pair<color, size_t> parseSingle(const std::string& token) {
     const auto limit = token.find_first_of(",;");
     const auto sub = token.substr(0, limit);
 
-    if (const auto trimmed = removeWord(sub,"red")) {
-        return {color::red,std::stoll(trimmed.value())};
+    if (const auto trimmed = removeWord(sub, "red")) {
+        return { color::red, std::stoll(trimmed.value()) };
     }
-    if (const auto trimmed = removeWord(sub,"blue")) {
-        return {color::blue,std::stoll(trimmed.value())};
+    if (const auto trimmed = removeWord(sub, "blue")) {
+        return { color::blue, std::stoll(trimmed.value()) };
     }
-    if (const auto trimmed = removeWord(sub,"green")) {
-        return {color::green,std::stoll(trimmed.value())};
+    if (const auto trimmed = removeWord(sub, "green")) {
+        return { color::green, std::stoll(trimmed.value()) };
     }
     const auto msg = "could not process the sub token:" + token;
     throw std::exception(msg.c_str());
 }
 
-struct game
-{
+struct game {
     size_t id;
     std::vector<color_store> games;
 
@@ -47,33 +50,44 @@ struct game
         id = std::stoi(line.substr(prefix_n, line.find(delimiter)));
 
         // games
-        const auto main_section = line.substr(line.find(delimiter)+1, line.size());
+        const auto main_section = line.substr(line.find(delimiter) + 1, line.size());
         games.emplace_back(color_store{ 0, 0, 0 });
         auto index = size_t{ 0 };
         while (true) {
             const auto next_commer = main_section.find(',', index);
             const auto next_semicolon = main_section.find(';', index);
-            const auto next = next_semicolon<next_commer ? next_semicolon : next_commer;
-            const auto sub = main_section.substr(index, next-index);
+            const auto next = next_semicolon < next_commer ? next_semicolon : next_commer;
+            const auto sub = main_section.substr(index, next - index);
 
             const auto [c, val] = parseSingle(sub);
             games.back()[static_cast<size_t>(c)] = val;
 
-            if (next_commer==next_semicolon) {
+            if (next_commer == next_semicolon) {
                 break;
             }
-            index = next+1;
+            index = next + 1;
 
             if (next_semicolon < next_commer) {
                 games.emplace_back(color_store{ 0, 0, 0 });
             }
         }
-
+    }
+    bool operator<=(const color_store& rhs) const {
+        return std::ranges::all_of(games, [rhs](const auto& g) {
+            return g[static_cast<size_t>(color::blue)] > rhs[static_cast<size_t>(color::blue)] || g[static_cast<size_t>(color::green)] > rhs[static_cast<size_t>(color::green)]
+                || g[static_cast<size_t>(color::red)] > rhs[static_cast<size_t>(color::red)];
+        });
     }
 };
 
 int main() {
-    const std::function<game(std::string)> fn = [](const std::string& line){return game(line);};
-    const auto data = parse("example.txt",fn);
+    const std::function<game(std::string)> fn = [](const std::string& line) { return game(line); };
+    const auto data = parse("example.txt", fn);
+    const auto result = std::accumulate(data.begin(), data.end(),size_t{0},
+        [](const size_t &sum, const game &g) {
+            return g<=bag ? sum+g.id : sum;
+        });
+
+    std::cout << result;
     return 0;
 }
