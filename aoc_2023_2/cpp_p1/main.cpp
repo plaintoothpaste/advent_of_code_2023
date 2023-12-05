@@ -1,17 +1,36 @@
 #include <array>
-#include <fstream>
-#include <iostream>
-#include <numeric>
+#include <optional>
 #include <string>
 #include <vector>
 #include "file_parse.h"
 
-enum color { red, green, blue };
+enum class color { red, green, blue };
 using color_store = std::array<size_t, 3>;
 constexpr auto bag = color_store{ 12,13,14 };
 
-std::pair<color, size_t> parseSingle(const std::string& token) {
+std::optional<std::string> removeWord(const std::string& token, const std::string& word) {
+    const auto limit = token.find(word);
+    if (limit < token.size()) {
+        return {token.substr(0, limit)};
+    }
+    return {};
+}
 
+std::pair<color, size_t> parseSingle(const std::string& token) {
+    const auto limit = token.find_first_of(",;");
+    const auto sub = token.substr(0, limit);
+
+    if (const auto trimmed = removeWord(sub,"red")) {
+        return {color::red,std::stoll(trimmed.value())};
+    }
+    if (const auto trimmed = removeWord(sub,"blue")) {
+        return {color::blue,std::stoll(trimmed.value())};
+    }
+    if (const auto trimmed = removeWord(sub,"green")) {
+        return {color::green,std::stoll(trimmed.value())};
+    }
+    const auto msg = "could not process the sub token:" + token;
+    throw std::exception(msg.c_str());
 }
 
 struct game
@@ -28,24 +47,25 @@ struct game
         id = std::stoi(line.substr(prefix_n, line.find(delimiter)));
 
         // games
-        const auto main_section = line.substr(line.find(delimiter), line.size());
-        games.emplace_back(color_store{0, 0, 0});
+        const auto main_section = line.substr(line.find(delimiter)+1, line.size());
+        games.emplace_back(color_store{ 0, 0, 0 });
         auto index = size_t{ 0 };
-        while (index < main_section.size()) {
+        while (true) {
             const auto next_commer = main_section.find(',', index);
             const auto next_semicolon = main_section.find(';', index);
+            const auto next = next_semicolon<next_commer ? next_semicolon : next_commer;
+            const auto sub = main_section.substr(index, next-index);
 
-            if (next_commer == next_semicolon && next_commer == main_section.size()) {
-                index = main_section.size();
-                continue;
+            const auto [c, val] = parseSingle(sub);
+            games.back()[static_cast<size_t>(c)] = val;
+
+            if (next_commer==next_semicolon) {
+                break;
             }
+            index = next+1;
 
-            const auto [c, val] = parseSingle(main_section.substr(index, next_commer));
-            games.back()[c] = val;
-            index = next_commer;
             if (next_semicolon < next_commer) {
-                games.emplace_back(color_store{0, 0, 0});
-                index = next_semicolon;
+                games.emplace_back(color_store{ 0, 0, 0 });
             }
         }
 
@@ -53,6 +73,7 @@ struct game
 };
 
 int main() {
-
+    const std::function<game(std::string)> fn = [](const std::string& line){return game(line);};
+    const auto data = parse("example.txt",fn);
     return 0;
 }

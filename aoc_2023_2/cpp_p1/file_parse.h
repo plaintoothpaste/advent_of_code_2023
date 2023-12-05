@@ -1,4 +1,5 @@
 #pragma once
+#include <fstream>
 #include <functional>
 
 template <typename T>
@@ -10,7 +11,7 @@ std::vector<T> parse(const std::string& file_path, std::function<T(std::string)>
     while (!file.eof()) {
         auto line = std::string{};
         std::getline(file, line);
-        out.emplace_back(parse_fn(line));
+        out.push_back(parse_fn(line));
     }
     return out;
 }
