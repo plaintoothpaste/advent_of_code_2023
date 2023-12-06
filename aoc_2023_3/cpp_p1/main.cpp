@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 
+#include "enumerate.h"
 #include "file_parse.h"
 
 std::vector<std::pair<size_t, size_t>> rowColIndex(const size_t rows, const size_t columns) {
@@ -82,8 +83,8 @@ std::vector<std::pair<size_t, size_t>> starToBool(const std::vector<std::vector<
     auto out = std::vector<std::pair<size_t, size_t>>{};
     out.reserve(row_cols.size());
     for (const auto [row, column] : row_cols) {
-        if (lines[row][column]=="*") {
-            out.emplace_back(row,column);
+        if (lines[row][column] == "*") {
+            out.emplace_back(row, column);
         }
     }
 
@@ -103,13 +104,26 @@ int main() {
         }
         return out;
     };
-    const auto data = parse("example.txt", fn);
+    const auto data = parse("input.txt", fn);
     const auto all_index = rowColIndex(data.size(), data.front().size());
     const auto number_stores = charToNums(data, all_index);
-    const auto is_symbol = starToBool(data,all_index);
+    const auto is_symbol = starToBool(data, all_index);
 
-    for (const auto & [row,col] : is_symbol) {
-        
+    auto output = std::vector<size_t>{};
+    output.resize(number_stores.size(), 0);
+
+    for (const auto& [row, col] : is_symbol) {
+        for (const auto [n_index, n] : enumerate(number_stores)) {
+            const size_t min_row = row == 0 ? 0 : row - 1;
+            if (n.row < min_row || n.row > row + 1) {
+                continue;
+            }
+
+            if (const auto v = n.ifNeigbourValue(row, col)) {
+                output[n_index] = v.value();
+            }
+        }
     }
+    std::cout << std::accumulate(output.begin(), output.end(), size_t{ 0 });
     return 0;
 }

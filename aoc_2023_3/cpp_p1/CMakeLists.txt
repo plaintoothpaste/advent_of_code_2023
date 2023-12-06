@@ -12,7 +12,7 @@ set(resources
 
 add_executable(aoc_2023_1
     main.cpp 
- "file_parse.h")
+ "file_parse.h" "enumerate.h")
 
 # Add all rescource files in a seperate folder next to the executable
 foreach(resource IN LISTS resources)
