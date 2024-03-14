@@ -32,8 +32,11 @@ std::vector<int> readAndConvert(const std::string& file_path) {
     return out;
 }
 
-int main() {
-    const std::vector<int> v = readAndConvert("input.txt");
+int main(int argc, char* argv[]) {
+    if (argc!=2){
+        throw std::exception("Only argument allowed is a input file")
+    }
+    const std::vector<int> v = readAndConvert(argv[1]);
     for (auto value : v) {
         std::cout << value << "\n";
     }
