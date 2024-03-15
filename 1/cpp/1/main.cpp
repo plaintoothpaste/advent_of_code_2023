@@ -15,7 +15,7 @@ int convertLine(const std::string& line) {
     }
     switch (conversions.size()) {
     case 0:
-        throw std::exception("line found without numbers");
+        return 0;
     case 1:
         return std::stoi(std::string{} + conversions.front() + conversions.front());
     case 2:
