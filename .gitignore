@@ -1,4 +1,7 @@
 .vs
 .cmake
 build
-/aoc_2023_8/cpp_p1/*.TMP
+*.TMP
+.clang-format
+.clang-tidy
+CMakePresets.json
