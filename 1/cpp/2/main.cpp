@@ -4,8 +4,9 @@
 #include <string>
 #include <vector>
 #include <optional>
+#include "file_parse.h"
 
-const auto matchers_letters = std::vector<std::pair<std::string,std::string>>{
+const auto matchers_letters = std::vector<std::pair<std::string, std::string>>{
     {"0","zero"},
     {"1","one"},
     {"2","two"},
@@ -33,42 +34,43 @@ std::pair<std::string, std::string> matchDigitOrLetters(std::pair<std::string, s
     catch (...) {}
 
     // as letters
-    for (const auto& [i,num] : matchers_letters) {
+    for (const auto& [i, num] : matchers_letters) {
         if (input.starts_with(num)) {
             //input = input.erase(0,num.size()); // incase second number begins in first number
-            res+=i;
+            res += i;
             break;
         }
     }
-    input = input.erase(0,1);
-    return matchDigitOrLetters({ res,input});
+    input = input.erase(0, 1);
+    return matchDigitOrLetters({ res,input });
 }
 
 std::vector<int> readAndConvert(const std::string& file_path) {
     std::ifstream file;
-        file.open(file_path);
+    file.open(file_path);
 
-        auto out = std::vector<int>{};
-        while (!file.eof()) {
-            auto line = std::string{};
-            std::getline(file, line);
-            const auto [conversions, _] = matchDigitOrLetters({"",line});
+    auto out = std::vector<int>{};
+    while (!file.eof()) {
+        auto line = std::string{};
+        std::getline(file, line);
+        const auto [conversions, _] = matchDigitOrLetters({ "",line });
 
-            if (conversions.size() == 1) {
-                const auto num = std::string{} + conversions.front() + conversions.front();
-                out.push_back(std::stoi(num));
-            }
-            else if (conversions.size() > 1) {
-                const auto num = std::string{} + conversions.front() + conversions.back();
-                out.push_back(std::stoi(num));
-            }
+        if (conversions.size() == 1) {
+            const auto num = std::string{} + conversions.front() + conversions.front();
+            out.push_back(std::stoi(num));
         }
+        else if (conversions.size() > 1) {
+            const auto num = std::string{} + conversions.front() + conversions.back();
+            out.push_back(std::stoi(num));
+        }
+    }
     return out;
 }
 
 int main(int argc, char* argv[]) {
-    if (argc!=2){
-        throw std::exception("Only argument allowed is a input file");
+    if (argc != 2) {
+        std::cout << "Only argument allowed is a input file";
+        return -1;
     }
     const std::vector<int> v = readAndConvert(argv[1]);
     for (const auto value : v) {

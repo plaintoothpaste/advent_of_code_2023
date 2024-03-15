@@ -8,6 +8,8 @@ $origin = pwd
 
 echo "cleaning and copying standard files"
 cp "$common\CMakePresets.json" $src
+cp "$common\.clang-format" $src
+cp "$common\.clang-tidy" $src
 
 echo "Building: $src"
 cd $src
@@ -18,6 +20,7 @@ cd $origin
 $exe = "$src/build/release/Release/aoc.exe"
 echo "Running: $exe"
 echo "example:"
-Start-Process -FilePath $exe -ArgumentList ['./$day/example.txt'] -Wait
+Start-Process -Wait -NoNewWindow -FilePath $exe -ArgumentList "./$day/example.txt"  
+echo ""
 echo "main:"
-Start-Process -FilePath $exe -ArgumentList ['./$day/input.txt'] -Wait
+Start-Process -Wait -NoNewWindow -FilePath $exe -ArgumentList "./$day/input.txt"  

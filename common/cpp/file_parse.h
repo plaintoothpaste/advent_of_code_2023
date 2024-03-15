@@ -4,13 +4,19 @@
 #include <string>
 #include <vector>
 
+
+namespace fileParse {
 class FileHandle {
     std::ifstream file;
 
 public:
     explicit FileHandle(const std::string& file_path) {
         file.open(file_path);
+        if (!file.is_open()) {
+            throw std::exception("File does not exist or could not be opened");
+        }
     }
+    
     ~FileHandle() {
         file.close();
     }
@@ -107,3 +113,4 @@ std::vector<size_t> lineToSizetVector(std::string line) {
     }
     return out;
 }
+} // namespace fileParse
