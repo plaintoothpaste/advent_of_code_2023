@@ -29,21 +29,24 @@ private:
 };
 
 
-int main() {
+int main(int argc, char* argv[]) {
+    if (argc != 2) {
+        std::cout << "Only argument allowed is a input file";
+        return -1;
+    }
+    auto file_handle = fileParse::FileHandle(argv[1]);
     // notes: each stage is always in order
-    const std::function<std::vector<size_t>(std::string)> fn_seed = [](const std::string& line) { return lineToSizetVector(line.substr(7)); };
-    auto file_handle = FileHandle("input.txt");
-
-    auto seeds = partialUntilNewLine(file_handle, fn_seed)[0];
+    const std::function<std::vector<size_t>(std::string)> fn_seed = [](const std::string& line) { return fileParse::lineToSizetVector(line.substr(7)); };
+    auto seeds = fileParse::partialUntilNewLine(file_handle, fn_seed)[0];
 
     const std::function<std::vector<size_t>(std::string)> fn = [](const std::string& line) {
         if (line.substr(0, 1).find_first_of("0123456789") != std::string::npos) {
-            return lineToSizetVector(line);
+            return fileParse::lineToSizetVector(line);
         }
         return std::vector<size_t>{};
     };
     while (! file_handle.eof()) {
-        auto number_rows = partialUntilNewLine(file_handle, fn);
+        auto number_rows = fileParse::partialUntilNewLine(file_handle, fn);
         number_rows.erase(number_rows.begin());
 
         auto is_converted = std::vector<bool>{};
@@ -69,5 +72,5 @@ int main() {
         std::cout << "seed[" << i << "]: " << seed << "\n";
     }
     const auto abs_min = *std::ranges::min_element(seeds);
-    std::cout << "---abs min="<< abs_min<<" \n";
+    std::cout << "---abs min=" << abs_min << " \n";
 }
