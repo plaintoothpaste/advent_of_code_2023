@@ -8,7 +8,7 @@
 #include "file_parse.h"
 
 // count how many different race options will beat the current record
-int count(int time, int record) {
+int count(double time, double record) {
     // distance = n * (time - n) = n * time - n^2
     // all n such that distance>record
     // record <  n * time - n^2
@@ -34,29 +34,35 @@ int count(int time, int record) {
     auto i_high = static_cast<int>(n_high);
     {
         const auto delta = n_high - static_cast<double>(i_high);
-        if (delta < 1e-5 && delta>=0) {
+        if (delta < 1e-5 && delta >= 0) {
             --i_high;
         }
     }
     return std::abs(i_high - i_low);
 }
 
-int main() {
-    // notes: each stage is always in order
-    auto file_handle = FileHandle("input.txt");
-
-
-    const std::function<std::vector<size_t>(std::string)> fn_time = [](const std::string& line) { return lineToSizetVector(line.substr(5)); };
-    const auto times = parseSingleLine(file_handle, fn_time);
-
-    const std::function<std::vector<size_t>(std::string)> fn_rec = [](const std::string& line) { return lineToSizetVector(line.substr(10)); };
-    const auto records = parseSingleLine(file_handle, fn_rec);
-
-    size_t multiple_distances = 1;
-    for (const auto& [i, time] : enumerate(times)) {
-        const auto better_count = count(static_cast<int>(time), static_cast<int>(records[i]));
-        std::cout << "better [" << i << "]=" << better_count << " \n";
-        multiple_distances *= static_cast<size_t>(better_count);
+int main(int argc, char* argv[]) {
+    if (argc != 2) {
+        std::cout << "Only argument allowed is a input file";
+        return -1;
     }
-    std::cout << "better multiples=" << multiple_distances << " \n";
+    auto file_handle = fileParse::FileHandle(argv[1]);
+
+    const std::function<size_t(std::string)> fn = [](const std::string& line) {
+        const auto allowed = std::string{"0123456789"};
+        auto nums = std::string{};
+        for (auto c : line) {
+            if (allowed.find_first_of(c)!=std::string::npos) {
+                nums.push_back(c);
+            }
+
+        }
+        return std::stoll(nums);
+    };
+
+    const auto time = fileParse::parseSingleLine(file_handle, fn);
+    const auto record = fileParse::parseSingleLine(file_handle, fn);
+
+    const auto better_count = count(static_cast<double>(time), static_cast<double>(record));
+    std::cout << "better=" << better_count << " \n";
 }
