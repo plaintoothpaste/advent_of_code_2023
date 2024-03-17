@@ -51,7 +51,7 @@ struct NumberStore {
                 return {};
         }
 
-        return { value };
+        return static_cast<int>(value);
     }
 };
 
@@ -91,30 +91,34 @@ std::vector<std::pair<size_t, size_t>> starToBool(const std::vector<std::vector<
     return out;
 }
 
-int main() {
+int main(int argc, char* argv[]) {
+    if (argc != 2) {
+        std::cout << "Only argument allowed is a input file";
+        return -1;
+    }
+    auto file_handle = fileParse::FileHandle(argv[1]);
+
     const std::function<std::vector<std::string>(std::string)> fn = [](const std::string& line) {
         auto out = std::vector<std::string>{};
         for (const auto& c : line) {
             const auto s = std::string{ c };
             if (s.find_first_of("0123456789.") == 0) {
                 out.push_back(s);
-            } else if(s.find_first_of("*") == 0) {
-                out.emplace_back("*");
             } else {
-                out.emplace_back(".");
+                out.emplace_back("*");
             }
         }
         return out;
     };
-    const auto data = parse("input.txt", fn);
+    const auto data = fileParse::parse(file_handle, fn);
     const auto all_index = rowColIndex(data.size(), data.front().size());
     const auto number_stores = charToNums(data, all_index);
     const auto is_symbol = starToBool(data, all_index);
 
-    size_t output = 0;
+    auto output = std::vector<size_t>{};
+    output.resize(number_stores.size(), 0);
 
     for (const auto& [row, col] : is_symbol) {
-        auto tmp_number_store_index = std::vector<size_t>{};
         for (const auto [n_index, n] : enumerate(number_stores)) {
             const size_t min_row = row == 0 ? 0 : row - 1;
             if (n.row < min_row || n.row > row + 1) {
@@ -122,14 +126,10 @@ int main() {
             }
 
             if (const auto v = n.ifNeigbourValue(row, col)) {
-                tmp_number_store_index.push_back(n_index);
+                output[n_index] = v.value();
             }
         }
-        if (tmp_number_store_index.size()==2) {
-            output+= number_stores[tmp_number_store_index[0]].value*number_stores[tmp_number_store_index[1]].value;
-        }
     }
-    std::cout << output;
-    //467835
+    std::cout << std::accumulate(output.begin(), output.end(), size_t{ 0 });
     return 0;
 }
