@@ -7,7 +7,13 @@
 
 #include "file_parse.h"
 
-int main() {
+int main(int argc, char* argv[]) {
+    if (argc != 2) {
+        std::cout << "Only argument allowed is a input file";
+        return -1;
+    }
+    auto file_handle = fileParse::FileHandle(argv[1]);
+
     using pair_vec = std::vector<std::vector<size_t>>;
     const std::function<pair_vec(std::string)> fn = [](const std::string& line) {
         // remove everything before the first colon
@@ -36,7 +42,7 @@ int main() {
         }
         return out;
     };
-    const auto data = parse("input.txt", fn);
+    const auto data = parse(file_handle, fn);
 
     const auto fn_acc = [](const size_t& acc, const std::vector<std::vector<size_t>>& vecs) {
         auto winners = vecs[0];

@@ -52,9 +52,14 @@ struct card {
     }
 };
 
-int main() {
+int main(int argc, char* argv[]) {
+    if (argc != 2) {
+        std::cout << "Only argument allowed is a input file";
+        return -1;
+    }
+    auto file_handle = fileParse::FileHandle(argv[1]);
     const std::function<size_t(std::string)> fn = [](const std::string& line) { return card(line).num_wins(); };
-    const auto data = parse("input.txt", fn);
+    const auto data = parse(file_handle, fn);
     auto multiplier = std::vector<size_t>{};
     multiplier.resize(data.size(), 1);
     size_t total = 0;
@@ -65,7 +70,7 @@ int main() {
         for (auto i = index + 1; i <= index + wins; ++i) {
             if (i > data.size())
                 break;
-            multiplier[i] +=multiplier[index];
+            multiplier[i] += multiplier[index];
         }
     }
     std::cout << total;
