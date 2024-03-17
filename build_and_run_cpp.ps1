@@ -10,6 +10,7 @@ echo "cleaning and copying standard files"
 cp "$common\CMakePresets.json" $src
 cp "$common\.clang-format" $src
 cp "$common\.clang-tidy" $src
+cp "$common\CMakeLists.txt" $src
 
 echo "Building: $src"
 cd $src
