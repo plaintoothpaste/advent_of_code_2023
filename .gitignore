@@ -5,3 +5,4 @@ build
 .clang-format
 .clang-tidy
 CMakePresets.json
+CMakeLists.txt
