@@ -16,6 +16,7 @@
  *Two pair, where two cards share one label, two other cards share a second label, and the remaining card has a third label: 23432
  *One pair, where two cards share one label, and the other three cards have a different label from the pair and each other: A23A4
  *High card, where all cards' labels are distinct: 23456
+ *Joker is a wild card
  */
 enum class HandType {
     high_card,
@@ -44,8 +45,8 @@ HandType determineQuality(std::vector<int> cards) {
     auto unique_counts = std::vector<int>{};
     for (const int u : uniques) {
         int count = 0;
-        for (const int c: cards) {
-            count = u==c ? count+1 : count;
+        for (const int c : cards) {
+            count = u == c ? count + 1 : count;
         }
         unique_counts.push_back(count);
     }
@@ -61,6 +62,42 @@ HandType determineQuality(std::vector<int> cards) {
     default:
         throw std::exception("should not be possible");
     }
+}
+
+std::vector<int> resolveJoker(std::vector<int>&& cards) {
+    auto index = size_t{0};
+    for (const auto& [i,v] : enumerate(cards)) {
+        if (v == 1) {
+            index = i;
+            break;
+        }
+    }
+    if (index==0) {
+        return cards;
+    }
+
+    auto current_cards = cards;
+    while (cards[index]<14) {
+        cards[index] +=1;
+
+        if (index!=cards.size()-1) {
+            // can be another J present
+            auto next_joker = index+1;
+            while (next_joker<cards.size()) {
+                if (cards[next_joker]==1) {
+                    cards = resolveJoker(std::move(cards));
+                    break;       
+                }
+                next_joker++;
+            }
+        }
+        if (determineQuality(cards)>determineQuality(current_cards)) {
+            std::swap_ranges(cards.begin(), cards.end(),current_cards.begin());
+            cards[index] = current_cards[index];
+        }
+
+    }
+    return current_cards;
 }
 
 class PokerHand {
@@ -79,7 +116,7 @@ public:
                 cards.push_back(12);
                 break;
             case 'J':
-                cards.push_back(11);
+                cards.push_back(1);
                 break;
             case 'T':
                 cards.push_back(10);
@@ -91,6 +128,9 @@ public:
                 cards.push_back(std::stoll(&c));
             }
         }
+        auto fn = [](const int lhs) { return lhs == 1; };
+        if (std::ranges::any_of(cards, fn))
+            cards = resolveJoker(std::move(cards));
         quality = determineQuality(cards);
     }
 
@@ -125,18 +165,21 @@ struct FullBid {
     }
 };
 
-int main() {
-    // notes: each stage is always in order
-    auto file_handle = FileHandle("input.txt");
+int main(int argc, char* argv[]) {
+    if (argc != 2) {
+        std::cout << "Only argument allowed is a input file";
+        return -1;
+    }
+    auto file_handle = fileParse::FileHandle(argv[1]);
     std::function<FullBid(std::string)> fn = [](const std::string& l) { return FullBid(l); };
-    std::vector<FullBid> data = parse(file_handle, fn);
+    std::vector<FullBid> data = fileParse::parse(file_handle, fn);
 
     auto fn_sort = [](const FullBid& lhs, const FullBid& rhs) { return lhs.hand < rhs.hand; };
     std::ranges::sort(data, fn_sort);
     int output = 0;
-    for(auto [i,d] : enumerate(data)) {
-        output += (i+1)*d.bid;
+    for (auto [i, d] : enumerate(data)) {
+        output += (i + 1) * d.bid;
     }
-    // 6440
+    // 5905
     std::cout << "final=" << output << " \n";
 }
