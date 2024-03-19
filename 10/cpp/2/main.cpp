@@ -261,13 +261,17 @@ void leftRight(Field& field) {
 }
 
 
-int main() {
+int main(int argc, char* argv[]) {
+    if (argc != 2) {
+        std::cout << "Only argument allowed is a input file";
+        return -1;
+    }
     // testing
     assert(segment(7) == (segment(1) ^ segment(0)));
     assert(segment(1) == (segment(2) ^ segment(3)));
 
     // notes: each stage is always in order
-    auto file_handle = FileHandle("input.txt");
+    auto file_handle = fileParse::FileHandle(argv[1]);
     const std::function<std::vector<segment>(std::string)> f = [](const std::string& line) {
         auto out = std::vector<segment>{};
         out.reserve(line.size());
@@ -278,7 +282,7 @@ int main() {
     };
 
     _setmode(_fileno(stdout), _O_U16TEXT);
-    auto field = parse(file_handle, f);
+    auto field = fileParse::parse(file_handle, f);
 
     print(field);
 
