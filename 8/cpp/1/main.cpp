@@ -39,7 +39,7 @@ std::vector<int> negativeOneArray(const size_t size) {
     return out;
 }
 
-std::vector<left_right> parseLr(FileHandle& f) {
+std::vector<left_right> parseLr(fileParse::FileHandle& f) {
     const std::function<std::vector<left_right>(std::string)> fn_lr = [](const std::string& line) {
         auto out = std::vector<left_right>{};
         out.reserve(line.size());
@@ -64,7 +64,7 @@ std::vector<left_right> parseLr(FileHandle& f) {
     return pattern;
 }
 
-std::tuple<std::vector<int>, std::vector<int>, int> getMaps(FileHandle& f, const int zzz) {
+std::tuple<std::vector<int>, std::vector<int>, int> getMaps(fileParse::FileHandle& f, const int zzz) {
     auto left_map = negativeOneArray(zzz + 1);
     auto right_map = negativeOneArray(zzz + 1);
 
@@ -80,7 +80,7 @@ std::tuple<std::vector<int>, std::vector<int>, int> getMaps(FileHandle& f, const
         }
         return 0;
     };
-    parse(f, fn_nums);
+    const auto _ = fileParse::parse(f, fn_nums);
 
     return { left_map, right_map, current_index };
 }
@@ -129,7 +129,11 @@ std::vector<std::pair<int, int>> getEnds(const std::vector<int>& lm, const std::
     return end;
 }
 
-int main() {
+int main(int argc, char* argv[]) {
+    if (argc != 2) {
+        std::cout << "Only argument allowed is a input file";
+        return -1;
+    }
     // testing
     assert(strToNum("AAA") == 0);
     const int zzz = strToNum("ZZZ");
@@ -139,7 +143,7 @@ int main() {
     assert(strToNum("XKM") == 8395);
     assert(strToNum("JKH") == 5001);
 
-    auto file_handle = FileHandle("input.txt");
+    auto file_handle = fileParse::FileHandle(argv[1]);
 
     const auto pattern = parseLr(file_handle);
     auto [left_map, right_map, current_index] = getMaps(file_handle, zzz);
