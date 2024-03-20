@@ -5,6 +5,7 @@
 #include <fcntl.h>
 #include <io.h>
 #include <iostream>
+#include <iterator>
 #include <numeric>
 #include <ostream>
 #include <ranges>
@@ -70,23 +71,38 @@ std::vector<int> convert(const std::vector<spring>& s) {
     return out;
 }
 
+template<typename T>
+void duplicateVector(std::vector<T>& vec, const size_t n) {
+    vec.reserve(vec.size() * n);
+    const auto start = vec.begin();
+    const auto end = vec.end();
+    for (size_t i = 0; i < n; i++) {
+        std::copy(start, end, std::back_inserter(vec));
+    }
+}
 struct SingleRow {
     std::vector<spring> symbols;
     std::vector<int> numbers;
+    const static size_t copies = 5;
 
     SingleRow(const std::string& line) {
         const auto limit = line.find_first_of(" ");
         const auto beginning = line.substr(0, limit);
         const auto ending = line.substr(limit + 1, line.size());
         symbols = lineToEnums(beginning);
-        numbers = lineToIntVector(ending, ",");
+        numbers = fileParse::lineToIntVector(ending, ",");
+        duplicateVector(symbols, copies);
+        duplicateVector(numbers, copies);
     }
+    
     bool noUnknowns() const {
         return ! std::ranges::any_of(symbols, [](const spring& s) { return s == spring::unknown; });
     }
+    
     bool valid() const {
         return numbers == convert(symbols);
     }
+    
     void recalculateNumber() {
         numbers = convert(symbols);
     }
@@ -148,7 +164,11 @@ int permuteCount(SingleRow initial) {
 }
 
 
-int main() {
+int main(int argc, char* argv[]) {
+    if (argc != 2) {
+        std::cout << "Only argument allowed is a input file";
+        return -1;
+    }
     // tests
     {
         const auto lhs = std::vector<int>{ 1, 2, 3 };
@@ -160,9 +180,9 @@ int main() {
     }
     std::cout << "All tests passed\n";
 
-    auto file_handle = FileHandle("input.txt");
+    auto file_handle = fileParse::FileHandle(argv[1]);
     const std::function<SingleRow(std::string)> f = [](const std::string& line) { return SingleRow(line); };
-    auto data = parse(file_handle, f);
+    auto data = fileParse::parse(file_handle, f);
     int total = 0;
     for (const auto i : data) {
         const auto permutations = permuteCount(i);
@@ -171,5 +191,5 @@ int main() {
     }
 
     std::cout << "total = " << total;
-    // 1,4,1,1,4,10
+    // 1,16384,1,16,2500,506250
 }
