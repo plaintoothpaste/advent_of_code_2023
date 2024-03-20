@@ -138,10 +138,14 @@ size_t allDistances(const RowColumn& locations, const RowColumn& empties) {
     }
     return distance;
 }
-int main() {
-    auto file_handle = FileHandle("input.txt");
+int main(int argc, char* argv[]) {
+    if (argc != 2) {
+        std::cout << "Only argument allowed is a input file";
+        return -1;
+    }
+    auto file_handle = fileParse::FileHandle(argv[1]);
     const std::function<std::vector<size_t>(std::string)> f = [](const std::string& line) { return lineToNums(line); };
-    auto galaxy = parse(file_handle, f);
+    auto galaxy = fileParse::parse(file_handle, f);
     print(galaxy);
     const auto locations = getPositions(galaxy);
     const auto empty = getEmptyRowColumn(galaxy);
