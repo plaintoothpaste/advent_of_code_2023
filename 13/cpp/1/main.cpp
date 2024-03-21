@@ -65,27 +65,28 @@ bool allColsSymmetricalAt(const size_t symmetry_index, const Field& f) {
 
 enum class symmetryLine { vertical, horizontal };
 
-struct SingleSymetry {
+struct SingleSymmetry {
     symmetryLine type;
     size_t location;
-    SingleSymetry(const symmetryLine t, size_t l)
+    SingleSymmetry(const symmetryLine t, size_t l)
         : type(t)
-        , location(l){};
+        , location(l) {
+    }
+
     size_t score() const {
         return type == symmetryLine::vertical ? location + 1 : 100 * (location + 1);
     }
 };
 
 class SingleField {
-private:
-    Field field;
-    std::vector<SingleSymetry> all_symettries;
-
 public:
+    Field field;
+    std::vector<SingleSymmetry> all_symmetries;
+
     explicit SingleField(const std::vector<std::string>& lines) {
         field.reserve(lines.size());
         for (const std::string& row : lines) {
-            field.push_back({});
+            field.emplace_back();
             field.back().reserve(lines.size());
             for (const char c : row) {
                 switch (c) {
@@ -103,13 +104,13 @@ public:
 
         for (size_t s = 0; s < field.back().size() - 1; ++s) {
             if (allRowsSymmetricalAt(s, field)) {
-                all_symettries.emplace_back(symmetryLine::horizontal, s);
+                all_symmetries.emplace_back(symmetryLine::horizontal, s);
             }
         }
 
         for (size_t s = 0; s < field.size() - 1; ++s) {
             if (allRowsSymmetricalAt(s, field)) {
-                all_symettries.emplace_back(symmetryLine::vertical, s);
+                all_symmetries.emplace_back(symmetryLine::vertical, s);
             }
         }
     }
@@ -131,32 +132,19 @@ public:
             line.back() = std::to_string(id);
             id++;
         }
-        
-        for (auto& line : s) {
-            for (const auto& value : row_data) {
-                o << (value == 1 ? '#' : '.');
-            }
-            if (data.type == symmetryLine::vertical) {
-                o << " " << ri + 1 << "\n";
-            } else {
-                if (ri == data.location) {
-                    o << "v";
-                } else if (ri == data.location + 1) {
-                    o << "^";
-                } else {
-                    o << " ";
-                }
-                o << ri + 1 << "\n";
-            }
-        }
         return o;
     }
+
     size_t score() const {
-        return type == symmetryLine::vertical ? location + 1 : 100 * (location + 1);
+        return std::accumulate(all_symmetries.begin(), all_symmetries.end(), size_t{ 0 }, [](const size_t& acc, const auto s) { return acc + s.score(); });
     }
 };
 
-int main() {
+int main(int argc, char* argv[]) {
+    if (argc != 2) {
+        std::cout << "Only argument allowed is a input file";
+        return -1;
+    }
     // total should be the sum of columns to the left, plus 100 times rows above
     // tests
     {
@@ -178,9 +166,9 @@ int main() {
         assert(allColsSymmetricalAt(1, actual.field) == false);
     }
     std::cout << "All tests passed\n";
-    auto file_handle = FileHandle("example.txt");
+    auto file_handle = fileParse::FileHandle(argv[1]);
     auto score = 0;
-    for (const auto field_string : readFileByParagraph(file_handle)) {
+    for (const auto field_string : fileParse::readFileByParagraph(file_handle)) {
         const auto field = SingleField(field_string);
         std::cout << field;
 
