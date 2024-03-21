@@ -69,7 +69,7 @@ std::vector<std::vector<std::string>> readFileByParagraph(FileHandle& f) {
     while (! f.eof()) {
         const auto line = f.getLine();
         if (line.empty() || line == "\n") {
-            out.back() = {};
+            out.push_back({});
         } else {
             out.back().push_back(line);
         }
