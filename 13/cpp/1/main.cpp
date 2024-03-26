@@ -12,8 +12,11 @@
 #include <vector>
 #include "file_parse.h"
 
-
-using field = std::vector<std::vector<unsigned short>>;
+enum class value {
+    empty,
+    full,
+};
+using field = std::vector<std::vector<value>>;
 field convert(const std::vector<std::string>& lines) {
     auto f = field{};
     f.reserve(lines.size());
@@ -23,10 +26,10 @@ field convert(const std::vector<std::string>& lines) {
         for (const char c : row) {
             switch (c) {
             case '.':
-                f.back().push_back(0);
+                f.back().push_back(value::empty);
                 break;
             case '#':
-                f.back().push_back(1);
+                f.back().push_back(value::full);
                 break;
             default:
                 throw std::exception("could not convert char");
@@ -36,39 +39,61 @@ field convert(const std::vector<std::string>& lines) {
     return f;
 }
 
+bool symmetyricLocations(const field& f, const std::vector<size_t>& rows, const std::vector<size_t>& cols, const std::vector<size_t>& locations) {
+    auto sum = 0;
+    for (const size_t l : locations) {
+        sum += static_cast<int>(f[rows[l]][cols[l]]);
+    }
+    return sum;
+}
+
 /// Assumes that a line of values are supplied, it returns all the locations of symmetry along the line
 std::vector<size_t> symmetries(const field& f, const std::vector<size_t>& rows, const std::vector<size_t>& cols) {
     auto symms = std::vector<size_t>{};
 
-    const auto values_match = [&](const size_t lhs, const size_t rhs) { return f[rows[lhs]][cols[lhs]] == f[rows[rhs]][cols[rhs]]; };
     for (auto s = size_t{ 0 }; s < size(rows) - 1; s++) {
-        auto good_reflection = true;
+        auto is_symmetrical = true;
         for (auto check = size_t{ 0 }; check <= s; check++) {
-            const auto reflected_check = 2 * (s - check) + 1;
-            if (reflected_check < size(rows) && ! values_match(check, reflected_check)) {
-                good_reflection = false;
-                break;
+            const auto reflected_check = s + s - check + 1;
+            if (reflected_check < size(rows)) {
+                // check symmetrical
+                if (f[rows[check]][cols[check]] != f[rows[reflected_check]][cols[reflected_check]]) {
+                    is_symmetrical = false;
+                    break;
+                }
             }
         }
-        if (good_reflection) {
+        if (is_symmetrical) {
             symms.push_back(s);
         }
     }
     return symms;
 }
 void test_symmetries() {
-    const auto f = field{ { 1, 0, 0, 1 }, { 0, 1, 1, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 1, 1, 0 } };
-    const auto test_1 = symmetries(f, { 0, 0, 0, 0 }, { 0, 1, 2, 3 });
-    const auto expect_1 = std::vector<size_t>{ 1 };
-    assert(test_1 == expect_1);
-
-    const auto test_2 = symmetries(f, { 2, 2, 2, 2 }, { 0, 1, 2, 3 });
-    const auto expect_2 = std::vector<size_t>{ 0, 1, 2 };
-    assert(test_2 == expect_2);
-
-    const auto test_3 = symmetries(f, { 0, 1, 2, 3 }, { 0, 0, 0, 0 });
-    const auto expect_3 = std::vector<size_t>{ 2 };
-    assert(test_3 == expect_3);
+    const auto l = std::vector<std::string>{ "#..#", ".##.", "....", "....", ".##." };
+    const auto f = convert(l);
+    {
+        const auto test = symmetries(f, { 0, 0, 0, 0 }, { 0, 1, 2, 3 });
+        const auto expect = std::vector<size_t>{ 1 };
+        assert(test == expect);
+    }
+    {
+        const auto test = symmetries(f, { 2, 2, 2, 2 }, { 0, 1, 2, 3 });
+        const auto expect = std::vector<size_t>{ 0, 1, 2 };
+        assert(test == expect);
+    }
+    {
+        const auto test = symmetries(f, { 0, 1, 2, 3 }, { 1, 1, 1, 1 });
+        const auto expect = std::vector<size_t>{ 2 };
+        assert(test == expect);
+    }
+    {
+        const auto l = std::vector<std::string>{ "#.##..##." };
+        const auto f = convert(l);
+        const auto test = symmetries(f, { 0, 0, 0, 0, 0, 0, 0, 0, 0 }, { 0, 1, 2, 3, 4, 5, 6, 7, 8 });
+        const auto expect = std::vector<size_t>{ 4, 6 };
+        assert(test == expect);
+    }
 }
 
 /// determine common vertical symmetries across all rows
@@ -90,7 +115,7 @@ std::vector<size_t> rowSymmetries(const field& f) {
         const auto new_symmetries = symmetries(f, rows, cols);
         const auto old_symmetries = existing_symmetries;
         existing_symmetries.clear();
-        std::ranges::set_intersection(existing_symmetries, new_symmetries, std::back_inserter(existing_symmetries));
+        std::ranges::set_intersection(old_symmetries, new_symmetries, std::back_inserter(existing_symmetries));
     }
     return existing_symmetries;
 }
@@ -114,7 +139,7 @@ std::vector<size_t> columnSymmetries(const field& f) {
         const auto new_symmetries = symmetries(f, rows, cols);
         const auto old_symmetries = existing_symmetries;
         existing_symmetries.clear();
-        std::ranges::set_intersection(existing_symmetries, new_symmetries, std::back_inserter(existing_symmetries));
+        std::ranges::set_intersection(old_symmetries, new_symmetries, std::back_inserter(existing_symmetries));
     }
     return existing_symmetries;
 }
@@ -167,6 +192,9 @@ struct SingleField {
         if (! data.symmetries.row_symmetries.empty()) {
             size_t index = 0;
             for (size_t i = 0; i <= data.f.size(); ++i) {
+                if (index >= data.symmetries.row_symmetries.size()) {
+                    break;
+                }
                 if (i == data.symmetries.row_symmetries[index]) {
                     o << std::setw(data_width) << '>';
                 } else if (i == data.symmetries.row_symmetries[index] + 1) {
@@ -185,24 +213,26 @@ struct SingleField {
             const auto& line = data.f[i];
             for (const auto c : line) {
                 switch (c) {
-                case 0:
+                case value::empty:
                     o << std::setw(data_width) << '.';
                     break;
-                case 1:
+                case value::full:
                     o << std::setw(data_width) << '#';
                     break;
-                default:
-                    throw std::exception("could not convert char");
                 }
             }
+            o << std::setw(data_width) << ' ';
+
             // print horizontal symmetry
-            if (i == data.symmetries.column_symmetries[index]) {
-                o << std::setw(data_width) << 'v';
-            } else if (i == data.symmetries.column_symmetries[index] + 1) {
-                o << std::setw(data_width) << '^';
-                index++;
-            } else {
-                o << std::setw(data_width) << ' ';
+            if (! data.symmetries.column_symmetries.empty() && index < data.symmetries.column_symmetries.size()) {
+                if (i == data.symmetries.column_symmetries[index]) {
+                    o << std::setw(data_width) << 'v';
+                } else if (i == data.symmetries.column_symmetries[index] + 1) {
+                    o << std::setw(data_width) << '^';
+                    index++;
+                } else {
+                    o << std::setw(data_width) << ' ';
+                }
             }
             o << i + 1 << "\n";
         }
@@ -225,10 +255,6 @@ int main(int argc, char* argv[]) {
         test_symmetries();
         const auto input = std::vector<std::string>{ "#..#", ".##.", "....", "....", ".##." };
         const auto actual = SingleField(input);
-        const auto expected = field{ { 1, 0, 0, 1 }, { 0, 1, 1, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 1, 1, 0 } };
-        assert(actual.f[0] == expected[0]);
-        assert(actual.f[1] == expected[1]);
-        assert(actual.f[2] == expected[2]);
         std::cout << actual;
     }
     std::cout << "All tests passed\n";
