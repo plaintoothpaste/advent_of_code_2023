@@ -100,7 +100,7 @@ field rollNorth(const field& original) {
     auto field = original;
     auto locations = allRowCol(field);
     locations = removeRow(std::move(locations), 0);
-    auto current_limit = field.size()-1;
+    auto current_limit = field.size() - 1;
     while (! locations.empty()) {
         for (const auto loc : locations) {
             auto& current = field[loc.row][loc.column];
@@ -110,7 +110,7 @@ field rollNorth(const field& original) {
                 previous = stone::moveable;
             }
         }
-        locations = removeRow(std::move(locations),current_limit);
+        locations = removeRow(std::move(locations), current_limit);
         current_limit--;
     }
     return field;
@@ -119,8 +119,8 @@ field rollNorth(const field& original) {
 field rollSouth(const field& original) {
     auto field = original;
     auto locations = allRowCol(field);
-    std::sort(locations.begin(), locations.end(),[](const rowCol& lhs, const rowCol& rhs) {return lhs.row>rhs.row;});
-    locations = removeRow(std::move(locations), field.size()-1);
+    std::ranges::sort(locations, [](const rowCol& lhs, const rowCol& rhs) { return lhs.row > rhs.row; });
+    locations = removeRow(std::move(locations), field.size() - 1);
     auto current_limit = 0;
     while (! locations.empty()) {
         for (const auto loc : locations) {
@@ -131,12 +131,53 @@ field rollSouth(const field& original) {
                 previous = stone::moveable;
             }
         }
-        locations = removeRow(std::move(locations),current_limit);
+        locations = removeRow(std::move(locations), current_limit);
         current_limit++;
     }
     return field;
 }
 
+field rollWest(const field& original) {
+    auto field = original;
+    auto locations = allRowCol(field);
+    std::ranges::sort(locations, [](const rowCol& lhs, const rowCol& rhs) { return lhs.column < rhs.column; });
+    locations = removeColumn(std::move(locations), 0);
+    auto current_limit = field.back().size() - 1;
+    while (! locations.empty()) {
+        for (const auto loc : locations) {
+            auto& current = field[loc.row][loc.column];
+            auto& previous = field[loc.row][loc.column - 1];
+            if (current == stone::moveable && previous == stone::empty) {
+                current = stone::empty;
+                previous = stone::moveable;
+            }
+        }
+        locations = removeColumn(std::move(locations), current_limit);
+        current_limit--;
+    }
+    return field;
+}
+
+field rollEast(const field& original) {
+    auto field = original;
+    auto locations = allRowCol(field);
+    std::ranges::sort(locations, [](const rowCol& lhs, const rowCol& rhs) { return lhs.column > rhs.column; });
+    locations = removeColumn(std::move(locations), field.back().size() - 1);
+    auto current_limit = 0;
+    while (! locations.empty()) {
+        for (const auto loc : locations) {
+            auto& current = field[loc.row][loc.column];
+            auto& previous = field[loc.row][loc.column + 1];
+            if (current == stone::moveable && previous == stone::empty) {
+                current = stone::empty;
+                previous = stone::moveable;
+            }
+        }
+        locations = removeColumn(std::move(locations), current_limit);
+        current_limit++;
+    }
+    return field;
+}
 void test_rolling() {
     {
         // North
@@ -152,6 +193,20 @@ void test_rolling() {
         const auto actual = rollSouth(input);
         assert(actual == expected);
     }
+    {
+        // west
+        const auto input = field{ { stone::empty, stone::empty, stone::empty }, { stone::empty, stone::empty, stone::moveable }, { stone::empty, stone::empty, stone::empty } };
+        const auto expected = field{ { stone::empty, stone::empty, stone::empty }, { stone::moveable, stone::empty, stone::empty }, { stone::empty, stone::empty, stone::empty } };
+        const auto actual = rollWest(input);
+        assert(actual == expected);
+    }
+    {
+        // east
+        const auto input = field{ { stone::empty, stone::empty, stone::empty }, { stone::moveable, stone::empty, stone::empty }, { stone::empty, stone::empty, stone::empty } };
+        const auto expected = field{ { stone::empty, stone::empty, stone::empty }, { stone::empty, stone::empty, stone::moveable }, { stone::empty, stone::empty, stone::empty } };
+        const auto actual = rollEast(input);
+        assert(actual == expected);
+    }
 }
 
 int main(int argc, char* argv[]) {
@@ -161,13 +216,42 @@ int main(int argc, char* argv[]) {
     }
 
     test_rolling();
-    std::cout << "Testing passed";
+    std::cout << "Testing passed \n";
 
     auto file_handle = fileParse::FileHandle(argv[1]);
     const std::function<std::vector<stone>(std::string)> parse_fn = [](const std::string& line) { return convertLine(line); };
     const field f = fileParse::parse(file_handle, parse_fn);
-    const field f_north = rollNorth(f);
-
     std::cout << f;
-    std::cout << f_north;
+
+    auto existing_field_hare = f;
+    auto existing_field_tortoise = f;
+    bool finished = false;
+    size_t iters = 0;
+
+    constexpr size_t end_point = 1000000000;
+    for (size_t cycle = 1; cycle < end_point; ++cycle) {
+        const auto new_field_hare = rollEast(rollSouth(rollWest(rollNorth(existing_field_hare))));
+
+        if (cycle % 2 == 0) {
+            const auto new_field_tortoise = rollEast(rollSouth(rollWest(rollNorth(existing_field_tortoise))));
+
+            if (new_field_hare == new_field_tortoise) {
+                // cycle found
+                iters = end_point % (cycle / 2);
+                finished = true;
+            }
+            existing_field_tortoise = new_field_tortoise;
+        }
+        if (finished) {
+            break;
+        }
+        existing_field_hare = new_field_hare;
+    }
+
+    // run through iters to find the final result
+    auto final = f;
+    for (size_t cycle = 0; cycle < iters; ++cycle) {
+        final = rollEast(rollSouth(rollWest(rollNorth(final))));
+    }
+    std::cout << final;
 }
