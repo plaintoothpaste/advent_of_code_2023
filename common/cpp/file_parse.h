@@ -12,11 +12,11 @@ class FileHandle {
 public:
     explicit FileHandle(const std::string& file_path) {
         file.open(file_path);
-        if (!file.is_open()) {
+        if (! file.is_open()) {
             throw std::exception("File does not exist or could not be opened");
         }
     }
-    
+
     ~FileHandle() {
         file.close();
     }
@@ -113,4 +113,25 @@ std::vector<size_t> lineToSizetVector(std::string line) {
     }
     return out;
 }
+    
+std::vector<std::string> splitByCommer(FileHandle& f) {
+    auto out = std::vector<std::string>{};
+    while (! f.eof()) {
+        const auto line = f.getLine();
+        auto tmp = std::string{};
+        if (!line.empty() || line != "\n") {
+            for (const auto c : line) {
+                if (c!=',') {
+                    tmp += c;
+                } else {
+                    out.push_back(tmp);
+                    tmp = "";
+                }
+            }
+            out.push_back(tmp);
+        }
+    }
+    return out;
+}
 } // namespace fileParse
+
