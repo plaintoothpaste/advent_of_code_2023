@@ -1,0 +1,44 @@
+indent-width = 4
+line-length = 120
+output-format = "grouped"
+
+[format]
+# Like Black, indent with spaces, rather than tabs.
+indent-style = "space"
+# Enable reformatting of code snippets in docstrings.
+docstring-code-format = true
+# Like Black, use double quotes for strings.
+quote-style = "double"
+# need to decide this
+skip-magic-trailing-comma = false
+
+[lint]
+# Allow fix for all enabled rules (when `--fix`) is provided.
+select = [
+    "E", # code style
+    "F", # pyflakes
+    "ERA001", # warn on commented out code
+    "A", # shadowing flake 8
+    "ARG", # function arguments
+    "com", # shadowing flake 8 commer
+    "B", # common code issues eg pointless booleans bad yielding etc flake 8 bugbear
+    "C", # list comprehension mistakesflake 8 comprehensions
+    "S", # moslty web related security features flake 8 bandit
+    "T", # debug trace in code
+    "FIX", # Check for fixme todo etc
+    "I", # import sorting
+    "ICN", # Import consistency
+    "PT100", # Pytest style recomendations
+    "SIM", # Code simplifications
+    "PTH", # Use pathlib over os.path, recommended for our projects
+    "PLE", # Common causes of errors
+    "RUF", # basic ruff checks many overlaps with above
+    "N" # naming stuff
+    ]
+
+fixable = ["ALL"]
+
+[lint.per-file-ignores]
+# ignore imprt lints in init files and in tests
+"__init__.py" = ["E402"]
+"**/{tests,docs,tools}/*" = ["E402"]

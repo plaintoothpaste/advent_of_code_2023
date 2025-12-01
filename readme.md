@@ -1,10 +1,10 @@
-# Advent of code 2023
+# Advent of code
 
-This is my solution folder for advent of code 2023. To run a particular solution with cpp use `build_and_run_cpp.ps1` followed by a day and part. Be aware this will also copy common cpp components into the desired folder.
+A general workspace for advent of code. 
 
+2023 can run particular solution(s) with cpp use `build_and_run_cpp.ps1` followed by a day and part. Be aware this will also copy common cpp components into the desired folder.
 
-
-# project structure
+## 2023 project structure
 
 -  common: A collection of commonly used resources eg file parsing and loading
    -  cpp: common C++ components, included natively using cmake lists. linting and formatting files and presets are coppied into each project, ignored by git.
@@ -16,3 +16,7 @@ This is my solution folder for advent of code 2023. To run a particular solution
    -  instructions.md: optional, recommended to add the answers once obtained to here, however this is optional
    -  example.txt: an example input text file.
    -  input.txt: the full text file
+
+## 2025/2024 
+
+No strict structure other then each day in a sub-directory.

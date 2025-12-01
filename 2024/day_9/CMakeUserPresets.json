@@ -1,0 +1,9 @@
+{
+    "version": 4,
+    "vendor": {
+        "conan": {}
+    },
+    "include": [
+        "C:\\Users\\m.mcmillan\\Code\\learning_repos\\aoc2024\\day_9\\generators\\CMakePresets.json"
+    ]
+}

@@ -1,0 +1,22 @@
+include(default)
+
+[build_requires]
+
+[settings]
+build_type=Debug
+
+[options]
+
+[env]
+
+[conf]
+# https://docs.conan.io/2/reference/config_files/profiles.html
+tools.build:cxxflags=['-WX','-W4']
+tools.build:defines=['debug']
+
+
+# {% if os == "Windows" %}
+# tools.build:cxxflags=['-WX','-W4']
+# {% else %}
+# tools.build:cxxflags=['-Werror','-Wall']
+# {% endif %}
